@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from backend.app.db.session import SessionLocal
 from backend.app.models.user import User
-from backend.app.schemas.user import UserCreate
+from backend.app.schemas.user import UserCreate, UserLogin
 from backend.app.core.security import hash_password, verify_password
 
 auth_router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -41,4 +41,20 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
         "message": "User created successfully",
         "user_id": new_user.id,
         "email": new_user.email
+    }
+
+@auth_router.post("/login-user")
+def login_user(user: UserLogin, db: Session = Depends(get_db)):
+    existing_user = db.query(User).filter(User.email == user.email).first()
+
+    if not existing_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if not verify_password(user.password, existing_user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid password")
+
+    return {
+        "message": "Login successful",
+        "user_id": existing_user.id,
+        "email": existing_user.email
     }
