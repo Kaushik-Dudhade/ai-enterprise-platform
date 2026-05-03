@@ -1,11 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from backend.app.db.session import SessionLocal
 from backend.app.models.user import User
 from backend.app.schemas.user import UserCreate, UserLogin
-from backend.app.core.security import hash_password, verify_password
+from backend.app.core.security import hash_password, verify_password, create_access_token, verify_access_token
 
 auth_router = APIRouter(prefix="/auth", tags=["Authentication"])
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login-user")
+
 
 def get_db():
     db = SessionLocal()
@@ -13,6 +16,17 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def get_current_user(token: str = Depends(oauth2_scheme)):
+    payload = verify_access_token(token)
+
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+    return payload["sub"]
+
+
 
 @auth_router.get("/login")
 def login_check():
@@ -53,8 +67,18 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
     if not verify_password(user.password, existing_user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid password")
 
+    token = create_access_token({"sub": existing_user.email})
+
     return {
         "message": "Login successful",
-        "user_id": existing_user.id,
-        "email": existing_user.email
+        "access_token": token,
+        "token_type": "bearer"
+    }
+
+
+@auth_router.get("/me")
+def get_my_profile(current_user: str = Depends(get_current_user)):
+    return {
+        "message": "Protected profile data accessed",
+        "logged_in_as": current_user
     }
