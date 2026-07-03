@@ -1,6 +1,6 @@
 # AI Enterprise Platform
 
-A production-oriented AI system being built over 90 days to simulate real-world enterprise AI engineering.
+A production-oriented AI system being built progressively over time to simulate real-world enterprise AI engineering.
 
 ## Objective
 To design and build a scalable AI platform that integrates:
@@ -26,16 +26,3 @@ backend/
 - db/ → database layer  
 - utils/ → helpers  
 
-## Day 1 Progress
-- Project repository initialized
-- Backend architecture created
-- FastAPI server running
-- Health endpoints implemented
-- GitHub integration completed
-
-## Upcoming
-- Authentication layer
-- Database integration
-- LLM integration (RAG)
-- Async workers (Celery/Redis)
-- Deployment pipeline
